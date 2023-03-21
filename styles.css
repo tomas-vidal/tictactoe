@@ -1,0 +1,33 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#game {
+  display: grid;
+  width: 600px;
+  grid-template-columns: 200px 200px 200px;
+  grid-auto-rows: 200px;
+  margin: 20px;
+}
+
+#game > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+}
+
+#game > div:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.3);
+}
