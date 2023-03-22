@@ -1,4 +1,5 @@
 const startButton = document.querySelector("#start");
+const resetButton = document.querySelector("#reset");
 
 const Gameboard = (() => {
   let board = ["", "", "", "", "", "", "", "", ""];
@@ -12,10 +13,14 @@ const Gameboard = (() => {
     const cells = document.querySelectorAll(".cell");
     cells.forEach((cell) => {
       cell.addEventListener("click", (e) => {
-        if (e.target.textContent !== "" || Game.gameOver) {
+        if (e.target.textContent !== "" || Game.getGameStatus()) {
           return;
         }
         addToken(e.target.id);
+        if (Game.getGameStatus()) {
+          console.log(`winner is ${Game.getWinner()}`);
+          ScoreBoard.renderScores();
+        }
       });
     });
   };
@@ -24,11 +29,16 @@ const Gameboard = (() => {
     board[indexMark] = Game.switchPlayer();
     render();
     Game.checkBoard(board);
-    console.log(Game.gameOver);
+  };
+
+  const resetBoard = () => {
+    board = ["", "", "", "", "", "", "", "", ""];
+    render();
   };
 
   return {
     render,
+    resetBoard,
   };
 })();
 
@@ -36,83 +46,102 @@ const createPlayer = (name, mark) => {
   return {
     name,
     mark,
+    score: 0,
   };
 };
 
+const ScoreBoard = (() => {
+  const title = document.querySelector("h1");
+  const scoreElement = document.createElement("div");
+
+  const renderScores = () => {
+    const players = Game.getPlayers();
+    scoreElement.innerHTML = `<div>${players[0].name} ${players[0].score} - ${players[1].score} ${players[1].name} </div>`;
+    title.parentNode.insertBefore(scoreElement, title.nextSibling);
+  };
+
+  return {
+    renderScores,
+  };
+})();
+
 const Game = (() => {
   let gameOver = false;
+  let winnerIndex = "";
   let players = [
-    { name: "John", mark: "X" },
-    { name: "Mark", mark: "O" },
+    { name: "John", mark: "X", score: 0 },
+    { name: "Mark", mark: "O", score: 0 },
   ];
-  let currentPlayerIndex = 0;
+  let currentPlayerIndex = 1;
+
+  const start = () => {
+    Gameboard.render();
+    ScoreBoard.renderScores();
+  };
+
+  const reset = () => {
+    currentPlayerIndex = 1;
+    gameOver = false;
+    Gameboard.resetBoard();
+  };
 
   const switchPlayer = () => {
-    currentPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+    currentPlayerIndex = currentPlayerIndex === 1 ? 0 : 1;
     return players[currentPlayerIndex].mark;
   };
 
   const checkBoard = (board) => {
-    for (let i = 0; i < players.length; i++) {
+    const winnerPattern = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    for (pattern of winnerPattern) {
       if (
-        board[0] === players[i].mark &&
-        board[1] === players[i].mark &&
-        board[2] === players[i].mark
+        board[pattern[0]] !== "" &&
+        board[pattern[0]] === board[pattern[1]] &&
+        board[pattern[0]] === board[pattern[2]]
       ) {
-        Game.gameOver = true;
-      } else if (
-        board[3] === players[i].mark &&
-        board[4] === players[i].mark &&
-        board[5] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[6] === players[i].mark &&
-        board[7] === players[i].mark &&
-        board[8] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[0] === players[i].mark &&
-        board[4] === players[i].mark &&
-        board[8] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[2] === players[i].mark &&
-        board[4] === players[i].mark &&
-        board[6] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[0] === players[i].mark &&
-        board[3] === players[i].mark &&
-        board[6] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[1] === players[i].mark &&
-        board[4] === players[i].mark &&
-        board[7] === players[i].mark
-      ) {
-        Game.gameOver = true;
-      } else if (
-        board[2] === players[i].mark &&
-        board[5] === players[i].mark &&
-        board[8] === players[i].mark
-      ) {
-        Game.gameOver = true;
+        gameOver = true;
+        winnerIndex = board[pattern[0]] === "X" ? "0" : "1";
       }
     }
   };
 
+  const getGameStatus = () => {
+    return gameOver;
+  };
+
+  const getWinner = () => {
+    players[winnerIndex].score++;
+    return players[winnerIndex].name;
+  };
+
+  const getPlayers = () => {
+    return players;
+  };
+
   return {
+    start,
+    reset,
     switchPlayer,
     checkBoard,
-    gameOver,
+    getGameStatus,
+    getWinner,
+    getPlayers,
   };
 })();
 
 startButton.addEventListener("click", () => {
-  Gameboard.render();
+  Game.start();
+});
+
+resetButton.addEventListener("click", () => {
+  Game.reset();
 });
